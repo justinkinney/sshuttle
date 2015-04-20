@@ -10,7 +10,9 @@ import urllib
 SSHUTTLE_EOL = "_EOL"
 
 def cook_rcfile(data):
-    """Join elements of passed list and return URI encoded string
+    """
+    Join elements of passed list and return a URI encoded string
+
     Args:
       data (list): list of lines
 
@@ -21,6 +23,15 @@ def cook_rcfile(data):
     return urllib.quote(data)
 
 def get_parser():
+    """
+    Generate a argparse.ArgumentParser object
+
+    Args:
+        None
+
+    Returns:
+        argparse.ArgumentParser
+    """
     parser = argparse.ArgumentParser(
                 usage="%(prog)s [ssh-opts] <host>",
                 description="%(prog)s takes advantage of bash to give you a familiar home on remote systems",
@@ -34,9 +45,12 @@ def get_parser():
     return parser
 
 def default_rcfile():
-    """Return a simple default rcfile
+    """
+    Return a simple default rcfile
+
     Args:
       none
+
     Returns:
       data (list): default rc file contents
     """
@@ -47,9 +61,12 @@ PS1="\\[\\e[00;31m\\]\\u\\[\\e[0m\\]\\[\\e[00;37m\\]@\\[\\e[0m\\]\\[\\e[00;36m\\
     return [ line.rstrip() for line in default.split('\n') ]
 
 def read_rcfile(rcfile):
-    """Read the file specified by the passed filename and return a list of lines with newlines stripped
+    """
+    Read the file specified by the passed filename and return a list of lines with newlines stripped
+
     Args:
       rcfile (str): a path to the rc file to read
+
     Returns:
       data (list): list of lines with newlines stripped
     """
@@ -59,7 +76,15 @@ def read_rcfile(rcfile):
     return [ line.rstrip() for line in script ]
 
 def get_user_rcfiles():
-    """Search default paths for rcfiles, read them, and return a list of lines"""
+    """
+    Search default paths for rcfiles, read them, and return a list of lines
+
+    Args:
+        None
+
+    Returns:
+        script (list): aggregated list of lines from all scripts
+    """
     search_files = []
     search_files.append(os.path.join(os.environ['HOME'], '.sshuttlerc'))
     search_files.append(os.path.join(os.environ['HOME'], '.sshuttlerc.d'))
@@ -74,31 +99,75 @@ def get_user_rcfiles():
     return script
 
 def get_inject_string_python(command_script):
+    """
+    Return a python one-liner to decode a URI encoded string
+
+    Args:
+        None
+
+    Returns:
+        script (string)
+    """
     return "INJECT=\"mkdir {tmpdir}; echo \\$(python -c 'import urllib; import sys; print urllib.unquote(str(sys.argv[1]))' '{cmd}') | sed 's/{eol}/\\n/g' >{tmpdir}/.rc\"".format(
         tmpdir="/tmp/sshuttle.{}".format(os.getpid()),
         cmd=command_script,
         eol=SSHUTTLE_EOL)
 
 def get_inject_string_perl(command_script):
+    """
+    Return a perl one-liner to decode a URI encoded string
+
+    Args:
+        None
+
+    Returns:
+        script (string)
+    """
     return "INJECT=\"mkdir {tmpdir}; echo \\$(perl -MURI::Escape -e 'print uri_unescape(\\\$ARGV[0]);' '{cmd}') | sed 's/{eol}/\\n/g' >{tmpdir}/.rc\"".format(
         tmpdir="/tmp/sshuttle.{}".format(os.getpid()),
         cmd=command_script,
         eol=SSHUTTLE_EOL)
 
 def get_inject_string_awk(command_script):
+    """
+    Return an awk one-liner to decode a URI encoded string
+
+    Args:
+        None
+
+    Returns:
+        script (string)
+    """
     return "INJECT=\"mkdir {tmpdir}; echo \\$(echo '{cmd}' | awk -niord '{{printf RT?$0chr(\"0x\"substr(RT,2)):$0}}' RS=%..) | sed 's/{eol}/\\n/g' >{tmpdir}/.rc\"".format(
         tmpdir="/tmp/sshuttle.{}".format(os.getpid()),
         cmd=command_script,
         eol=SSHUTTLE_EOL)
 
-def get_inject_string_shell(command_script):
+def get_inject_string_bash(command_script):
+    """
+    Return a bash one-liner to decode a URI encoded string
+
+    Args:
+        None
+
+    Returns:
+        script (string)
+    """
     return "INJECT=\"mkdir {tmpdir}; echo \\$(x='{cmd}'; printf \\\"${{x//\\%/\\x}}\\\" --) |sed 's/{eol}/\\n/g' >{tmpdir}/.rc\"".format(
         tmpdir="/tmp/sshuttle.{}".format(os.getpid()),
         cmd=command_script,
         eol=SSHUTTLE_EOL)
 
 def connect(target_host, ssh_options, command_script):
-    '''connect to the host and inject our commands'''
+    """
+    Connect to the host and inject our commands
+
+    Args:
+        None
+
+    Returns:
+        None
+    """
 
     if args[0].decoder and 'perl' in args[0].decoder:
         print 'perl detected'
@@ -118,6 +187,9 @@ def connect(target_host, ssh_options, command_script):
     os.system(cmd_line)
 
 def main(args):
+    """
+    Build the injection string and connect to the host
+    """
     target_host = args[1].pop()
     if len(args[1]) > 0:
         ssh_options = args[1]
