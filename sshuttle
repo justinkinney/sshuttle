@@ -178,9 +178,9 @@ def connect(target_host, ssh_options, command_script):
 
     if args[0].decoder and 'perl' in args[0].decoder:
         inject_string = get_inject_string_perl(command_script)
-    if args[0].decoder and 'awk' in args[0].decoder:
+    elif args[0].decoder and 'awk' in args[0].decoder:
         inject_string = get_inject_string_awk(command_script)
-    if args[0].decoder and 'bash' in args[0].decoder:
+    elif args[0].decoder and 'bash' in args[0].decoder:
         inject_string = get_inject_string_bash(command_script)
     else:
         inject_string = get_inject_string_python(command_script)
