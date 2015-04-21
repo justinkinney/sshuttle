@@ -1,4 +1,8 @@
 #!/usr/bin/env python
+"""
+sshuttle allows you to maintain a familiar environment with you when you connect to new hosts.
+It does this by injecting a customizable bashrc during your ssh session setup.
+"""
 
 import argparse
 import glob
@@ -123,10 +127,11 @@ def get_inject_string_perl(command_script):
     Returns:
         script (string)
     """
-    return "INJECT=\"mkdir {tmpdir}; echo \\$(perl -MURI::Escape -e 'print uri_unescape(\\\$ARGV[0]);' '{cmd}') | sed 's/{eol}/\\n/g' >{tmpdir}/.rc\"".format(
-        tmpdir="/tmp/sshuttle.{}".format(os.getpid()),
-        cmd=command_script,
-        eol=SSHUTTLE_EOL)
+    raise Exception("perl mode not yet implemented")
+    #return "INJECT=\"mkdir {tmpdir}; echo \\$(perl -MURI::Escape -e 'print uri_unescape(\\\$ARGV[0]);' '{cmd}') | sed 's/{eol}/\\n/g' >{tmpdir}/.rc\"".format(
+    #    tmpdir="/tmp/sshuttle.{}".format(os.getpid()),
+    #    cmd=command_script,
+    #    eol=SSHUTTLE_EOL)
 
 def get_inject_string_awk(command_script):
     """
@@ -138,10 +143,11 @@ def get_inject_string_awk(command_script):
     Returns:
         script (string)
     """
-    return "INJECT=\"mkdir {tmpdir}; echo \\$(echo '{cmd}' | awk -niord '{{printf RT?$0chr(\"0x\"substr(RT,2)):$0}}' RS=%..) | sed 's/{eol}/\\n/g' >{tmpdir}/.rc\"".format(
-        tmpdir="/tmp/sshuttle.{}".format(os.getpid()),
-        cmd=command_script,
-        eol=SSHUTTLE_EOL)
+    raise Exception("awk mode not yet implemented")
+    #return "INJECT=\"mkdir {tmpdir}; echo \\$(echo '{cmd}' | awk -niord '{{printf RT?$0chr(\"0x\"substr(RT,2)):$0}}' RS=%..) | sed 's/{eol}/\\n/g' >{tmpdir}/.rc\"".format(
+    #    tmpdir="/tmp/sshuttle.{}".format(os.getpid()),
+    #    cmd=command_script,
+    #    eol=SSHUTTLE_EOL)
 
 def get_inject_string_bash(command_script):
     """
@@ -153,10 +159,11 @@ def get_inject_string_bash(command_script):
     Returns:
         script (string)
     """
-    return "INJECT=\"mkdir {tmpdir}; echo \\$(x='{cmd}'; printf \\\"${{x//\\%/\\x}}\\\" --) |sed 's/{eol}/\\n/g' >{tmpdir}/.rc\"".format(
-        tmpdir="/tmp/sshuttle.{}".format(os.getpid()),
-        cmd=command_script,
-        eol=SSHUTTLE_EOL)
+    raise Exception("bash mode not yet implemented")
+    #return "INJECT=\"mkdir {tmpdir}; echo \\$(x='{cmd}'; printf \\\"${{x//\\%/\\x}}\\\" --) |sed 's/{eol}/\\n/g' >{tmpdir}/.rc\"".format(
+    #    tmpdir="/tmp/sshuttle.{}".format(os.getpid()),
+    #    cmd=command_script,
+    #    eol=SSHUTTLE_EOL)
 
 def connect(target_host, ssh_options, command_script):
     """
@@ -170,10 +177,12 @@ def connect(target_host, ssh_options, command_script):
     """
 
     if args[0].decoder and 'perl' in args[0].decoder:
-        print 'perl detected'
         inject_string = get_inject_string_perl(command_script)
+    if args[0].decoder and 'awk' in args[0].decoder:
+        inject_string = get_inject_string_awk(command_script)
+    if args[0].decoder and 'bash' in args[0].decoder:
+        inject_string = get_inject_string_bash(command_script)
     else:
-        print 'python detected'
         inject_string = get_inject_string_python(command_script)
 
     cmd_line = ''
