@@ -90,8 +90,8 @@ def get_user_rcfiles():
         script (list): aggregated list of lines from all scripts
     """
     search_files = []
-    search_files.append(os.path.join(os.environ['HOME'], '.sshuttlerc'))
     search_files.append(os.path.join(os.environ['HOME'], '.sshuttlerc.d'))
+    search_files.append(os.path.join(os.environ['HOME'], '.sshuttlerc'))
 
     script = []
     for rcfile in search_files:

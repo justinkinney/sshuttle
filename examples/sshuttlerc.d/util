@@ -1,0 +1,29 @@
+get_session () {
+    SCREEN=$(which screen 2>/dev/null)
+    TMUX=$(which tmux 2>/dev/null)
+    WHOAMI=$(whoami)
+
+    if [ -n "$TMUX" ]; then
+        echo "using tmux"
+        if ${TMUX} has-session -t ${WHOAMI}; then
+            tmux -2 attach-session -t ${WHOAMI} -d
+        else
+            tmux -2 new-session -s ${WHOAMI} -d
+            tmux set-option -g set-titles-string '#W'
+            tmux attach -d -t ${WHOAMI}
+        fi
+        return
+    fi
+
+    if [ -n "$SCREEN" ]; then
+        echo "using screen"
+        if ${SCREEN} -ls | grep S-${WHOAMI} | grep "Socket in"; then
+            ${SCREEN} -rr
+        else
+            ${SCREEN} -S ${WHOAMI}
+        fi
+        return
+    fi
+
+    echo "couldn't find screen or tmux"
+}
