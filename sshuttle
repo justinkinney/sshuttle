@@ -5,11 +5,11 @@ It does this by injecting a customizable bashrc during your ssh session setup.
 """
 
 import argparse
+import base64
 import glob
 import os
 import subprocess
 import sys
-import urllib
 
 SSHUTTLE_EOL = "_EOL"
 
@@ -24,7 +24,7 @@ def cook_rcfile(data):
       data (str): URI encoded string
     """
     data = SSHUTTLE_EOL.join(data)
-    return urllib.quote(data)
+    return base64.b64encode(data)
 
 def get_parser():
     """
@@ -102,9 +102,9 @@ def get_user_rcfiles():
                 script += read_rcfile(os.path.join(rcfile, rcdfile))
     return script
 
-def get_inject_string_python(command_script):
+def get_inject_string_base64(command_script):
     """
-    Return a python one-liner to decode a URI encoded string
+    Return a base64 one-liner to decode a URI encoded string
 
     Args:
         None
@@ -112,58 +112,10 @@ def get_inject_string_python(command_script):
     Returns:
         script (string)
     """
-    return "INJECT=\"mkdir {tmpdir}; echo \\$(python -c 'import urllib; import sys; print urllib.unquote(str(sys.argv[1]))' '{cmd}') | sed 's/{eol}/\\n/g' >{tmpdir}/.rc\"".format(
+    return "INJECT=\"mkdir {tmpdir}; echo \\$(echo '{cmd}' | base64 -di -) | sed 's/{eol}/\\n/g' >{tmpdir}/.rc\"".format(
         tmpdir="/tmp/sshuttle.{}".format(os.getpid()),
         cmd=command_script,
         eol=SSHUTTLE_EOL)
-
-def get_inject_string_perl(command_script):
-    """
-    Return a perl one-liner to decode a URI encoded string
-
-    Args:
-        None
-
-    Returns:
-        script (string)
-    """
-    raise Exception("perl mode not yet implemented")
-    #return "INJECT=\"mkdir {tmpdir}; echo \\$(perl -MURI::Escape -e 'print uri_unescape(\\\$ARGV[0]);' '{cmd}') | sed 's/{eol}/\\n/g' >{tmpdir}/.rc\"".format(
-    #    tmpdir="/tmp/sshuttle.{}".format(os.getpid()),
-    #    cmd=command_script,
-    #    eol=SSHUTTLE_EOL)
-
-def get_inject_string_awk(command_script):
-    """
-    Return an awk one-liner to decode a URI encoded string
-
-    Args:
-        None
-
-    Returns:
-        script (string)
-    """
-    raise Exception("awk mode not yet implemented")
-    #return "INJECT=\"mkdir {tmpdir}; echo \\$(echo '{cmd}' | awk -niord '{{printf RT?$0chr(\"0x\"substr(RT,2)):$0}}' RS=%..) | sed 's/{eol}/\\n/g' >{tmpdir}/.rc\"".format(
-    #    tmpdir="/tmp/sshuttle.{}".format(os.getpid()),
-    #    cmd=command_script,
-    #    eol=SSHUTTLE_EOL)
-
-def get_inject_string_bash(command_script):
-    """
-    Return a bash one-liner to decode a URI encoded string
-
-    Args:
-        None
-
-    Returns:
-        script (string)
-    """
-    raise Exception("bash mode not yet implemented")
-    #return "INJECT=\"mkdir {tmpdir}; echo \\$(x='{cmd}'; printf \\\"${{x//\\%/\\x}}\\\" --) |sed 's/{eol}/\\n/g' >{tmpdir}/.rc\"".format(
-    #    tmpdir="/tmp/sshuttle.{}".format(os.getpid()),
-    #    cmd=command_script,
-    #    eol=SSHUTTLE_EOL)
 
 def connect(target_host, ssh_options, command_script):
     """
@@ -175,15 +127,7 @@ def connect(target_host, ssh_options, command_script):
     Returns:
         None
     """
-
-    if args[0].decoder and 'perl' in args[0].decoder:
-        inject_string = get_inject_string_perl(command_script)
-    elif args[0].decoder and 'awk' in args[0].decoder:
-        inject_string = get_inject_string_awk(command_script)
-    elif args[0].decoder and 'bash' in args[0].decoder:
-        inject_string = get_inject_string_bash(command_script)
-    else:
-        inject_string = get_inject_string_python(command_script)
+    inject_string = get_inject_string_base64(command_script)
 
     cmd_line = ''
     cmd_line += inject_string
