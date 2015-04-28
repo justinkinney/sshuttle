@@ -4,7 +4,7 @@ get_session () {
     WHOAMI=$(whoami)
 
     if [ -n "$TMUX" ]; then
-        echo "using tmux"
+        generate_tmux_rc
         if ${TMUX} has-session -t ${WHOAMI}; then
             tmux -2 attach-session -t ${WHOAMI} -d
         else
@@ -16,7 +16,7 @@ get_session () {
     fi
 
     if [ -n "$SCREEN" ]; then
-        echo "using screen"
+        generate_screenrc
         if ${SCREEN} -ls | grep S-${WHOAMI} | grep "Socket in"; then
             ${SCREEN} -rr
         else
@@ -26,4 +26,13 @@ get_session () {
     fi
 
     echo "couldn't find screen or tmux"
+}
+
+generate_screenrc () {
+    echo "hardstatus alwayslastline \"%{b kw}%H %{r}%1\` %{w}| %{g}%c %{w}| %{y}%d.%m.%Y %{w}| %{g}%l %{w}| %{-b kw}%u %-Lw%{= rW}%50> %n%f %t %{-}%+Lw%<\"" > ${TMPDIR}/screenrc
+    export SCREENRC=${TMPDIR}/screenrc
+}
+
+generate_tmux_rc () {
+    echo "not implemented yet"
 }
