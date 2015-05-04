@@ -64,3 +64,7 @@ TODO
 ====
 * sshuttle should infer the shell to launch on the remote system, probably from the rc file shebang line
 * os.system maybe ought to be replaced with subprocess
+
+
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/justinkinney/sshuttle/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+
