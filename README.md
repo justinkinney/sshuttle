@@ -22,6 +22,13 @@ is this a bad idea?
 ===================
 It's almost certainly not the best idea to be injecting arbitrary code to be executed on a remote system.
 
+installing
+==========
+```
+git clone git://github.com/justinkinney/sshuttle
+./sshuttle <hostname>
+```
+
 example usage
 =============
 
@@ -56,5 +63,4 @@ alias '....'='cd ../../..'
 TODO
 ====
 * sshuttle should infer the shell to launch on the remote system, probably from the rc file shebang line
-* os.system needs to be replaced with subprocess
-* sshuttle should support a different encoding method than the current hackiness that it does
+* os.system maybe ought to be replaced with subprocess
