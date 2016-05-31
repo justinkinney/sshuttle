@@ -26,7 +26,7 @@ installing
 ==========
 ```
 git clone git://github.com/justinkinney/sshuttle
-./sshuttle <hostname>
+python setup.py install
 ```
 
 example usage
