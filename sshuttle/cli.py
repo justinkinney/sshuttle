@@ -5,16 +5,17 @@ connect to new hosts.
 
 It does this by injecting a customizable bashrc during your ssh session setup.
 """
+__version__ = '0.0.1'
 
 import argparse
 import base64
 import os
 import random
-import subprocess
 import sys
 
 SSHUTTLE_EOL = "_EOL"
 SSHUTTLEID = random.randint(10000, 99999)
+
 
 def cook_rcfile(data):
     """
@@ -29,6 +30,7 @@ def cook_rcfile(data):
     data = SSHUTTLE_EOL.join(data)
     return base64.b64encode(data)
 
+
 def get_parser():
     """
     Generate a argparse.ArgumentParser object
@@ -40,11 +42,11 @@ def get_parser():
         argparse.ArgumentParser
     """
     parser = argparse.ArgumentParser(
-                usage="%(prog)s [ssh-opts] <host>",
-                description="%(prog)s takes advantage of bash to give you a "
-                             "familiar home on remote systems",
-             )
+        usage="%(prog)s [ssh-opts] <host>",
+        description="%(prog)s takes advantage of bash to give you a "
+        "familiar home on remote systems")
     return parser
+
 
 def default_rcfile():
     """
@@ -63,9 +65,10 @@ cleaner () {
 }
 trap cleaner SIGINT SIGTERM EXIT
 """
-    lines = [ line.rstrip() for line in default.split('\n') ]
+    lines = [line.rstrip() for line in default.split('\n')]
     lines.insert(0, "TMPDIR=/tmp/sshuttle.{}".format(SSHUTTLEID))
     return lines
+
 
 def read_rcfile(rcfile):
     """
@@ -81,7 +84,8 @@ def read_rcfile(rcfile):
     script = ["# following sourced from {}".format(rcfile)]
     with open(rcfile) as f:
         script += f.readlines()
-    return [ line.rstrip() for line in script ]
+    return [line.rstrip() for line in script]
+
 
 def get_user_rcfiles():
     """
@@ -108,6 +112,7 @@ def get_user_rcfiles():
                 script += read_rcfile(os.path.join(rcfile, rcdfile))
     return script
 
+
 def get_inject_string_base64(command_script):
     """
     Return a base64 encoded string which includes shell injection
@@ -121,9 +126,10 @@ def get_inject_string_base64(command_script):
               echo \\$(echo '{cmd}' |
               base64 -di -) |
               sed 's/{eol}/\\n/g' >{tmpdir}/rc\"""".format(
-            tmpdir="/tmp/sshuttle.{}".format(SSHUTTLEID),
-            cmd=command_script,
-            eol=SSHUTTLE_EOL)
+        tmpdir="/tmp/sshuttle.{}".format(SSHUTTLEID),
+        cmd=command_script,
+        eol=SSHUTTLE_EOL)
+
 
 def connect(target_host, ssh_options, command_script):
     """
@@ -134,8 +140,7 @@ def connect(target_host, ssh_options, command_script):
     Returns:
         None
     """
-
-    cmd_line  = ''
+    cmd_line = ''
     cmd_line += get_inject_string_base64(command_script)
     cmd_line += "; /usr/bin/ssh -t"
 
@@ -143,11 +148,11 @@ def connect(target_host, ssh_options, command_script):
         cmd_line += " {}".format(option)
 
     cmd_line += """ {target_host} \"$INJECT;
-                    exec /bin/bash --rcfile {tmpdir}/rc\"""".format(
-                    target_host=target_host,
-                    tmpdir="/tmp/sshuttle.{}".format(SSHUTTLEID)
-                )
+        exec /bin/bash --rcfile {tmpdir}/rc\"""".format(
+        target_host=target_host,
+        tmpdir="/tmp/sshuttle.{}".format(SSHUTTLEID))
     os.system(cmd_line)
+
 
 def main(args):
     """
@@ -159,12 +164,13 @@ def main(args):
     else:
         ssh_options = ""
 
-    rcfile  = default_rcfile()
+    rcfile = default_rcfile()
     rcfile += get_user_rcfiles()
     inject_string = cook_rcfile(rcfile)
     connect(target_host, ssh_options, inject_string)
 
-if __name__ == "__main__":
+
+def cli():
     parser = get_parser()
     args = parser.parse_known_args()
 
@@ -173,3 +179,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     sys.exit(main(args))
+
+
+if __name__ == "__main__":
+    cli()
