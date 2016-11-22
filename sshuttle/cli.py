@@ -5,7 +5,6 @@ connect to new hosts.
 
 It does this by injecting a customizable bashrc during your ssh session setup.
 """
-__version__ = '0.0.1'
 
 import argparse
 import base64
@@ -13,6 +12,7 @@ import os
 import random
 import sys
 
+__version__ = '0.0.1'
 SSHUTTLE_EOL = "_EOL"
 SSHUTTLEID = random.randint(10000, 99999)
 
