@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 sshuttle allows you to maintain a familiar environment with you when you
 connect to new hosts.
@@ -43,7 +42,8 @@ def get_parser():
     parser = argparse.ArgumentParser(
         usage="%(prog)s [ssh-opts] <host>",
         description="%(prog)s takes advantage of bash to give you a "
-        "familiar home on remote systems")
+        "familiar home on remote systems",
+    )
     return parser
 
 
@@ -64,7 +64,7 @@ cleaner () {
 }
 trap cleaner SIGINT SIGTERM EXIT
 """
-    lines = [line.rstrip() for line in default.split('\n')]
+    lines = [line.rstrip() for line in default.split("\n")]
     lines.insert(0, "TMPDIR=/tmp/sshuttle.{}".format(SSHUTTLEID))
     return lines
 
@@ -89,8 +89,8 @@ def read_rcfile(rcfile):
 def get_user_rcfiles():
     """
     Search default paths for rcfiles, read them, and return a list of lines
-    Note: contents of .sshuttlerc.d are read first since they are more likely to
-    contain functions
+    Note: contents of .sshuttlerc.d are read first since they are more likely
+    to contain functions
 
     Args:
         None
@@ -99,8 +99,8 @@ def get_user_rcfiles():
         script (list): aggregated list of lines from all scripts
     """
     search_files = []
-    search_files.append(os.path.join(os.environ['HOME'], '.sshuttlerc.d'))
-    search_files.append(os.path.join(os.environ['HOME'], '.sshuttlerc'))
+    search_files.append(os.path.join(os.environ["HOME"], ".sshuttlerc.d"))
+    search_files.append(os.path.join(os.environ["HOME"], ".sshuttlerc"))
 
     script = []
     for rcfile in search_files:
@@ -127,7 +127,8 @@ def get_inject_string_base64(command_script):
               sed 's/{eol}/\\n/g' >{tmpdir}/rc\"""".format(
         tmpdir="/tmp/sshuttle.{}".format(SSHUTTLEID),
         cmd=command_script,
-        eol=SSHUTTLE_EOL)
+        eol=SSHUTTLE_EOL,
+    )
 
 
 def connect(target_host, ssh_options, command_script):
@@ -139,7 +140,7 @@ def connect(target_host, ssh_options, command_script):
     Returns:
         None
     """
-    cmd_line = ''
+    cmd_line = ""
     cmd_line += get_inject_string_base64(command_script)
     cmd_line += "; /usr/bin/ssh -t"
 
@@ -148,8 +149,8 @@ def connect(target_host, ssh_options, command_script):
 
     cmd_line += """ {target_host} \"$INJECT;
         exec /bin/bash --rcfile {tmpdir}/rc\"""".format(
-        target_host=target_host,
-        tmpdir="/tmp/sshuttle.{}".format(SSHUTTLEID))
+        target_host=target_host, tmpdir="/tmp/sshuttle.{}".format(SSHUTTLEID)
+    )
     os.system(cmd_line)
 
 
