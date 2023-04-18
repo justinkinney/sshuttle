@@ -162,21 +162,32 @@ def main(opts, args):
     """
     Build the injection string and connect to the host
     """
-    target_host = args.pop()
+    target_host = args.pop(0)
+
+    if opts.verbose:
+        print(f"target host: {target_host}")
+
     if len(args) > 0:
-        ssh_options = args
+        ssh_args = args
     else:
-        ssh_options = ""
+        ssh_args = ""
+
+    if opts.verbose:
+        print(f"ssh arguments: {ssh_args}")
 
     rcfile = default_rcfile(opts)
     rcfile += get_user_rcfiles(opts)
     inject_string = cook_rcfile(opts, rcfile)
-    connect(opts, target_host, ssh_options, inject_string)
+    connect(opts, target_host, ssh_args, inject_string)
 
 
 def cli():
     parser = get_parser()
     opts, args = parser.parse_known_args()
+
+    if opts.verbose:
+        print(f"options: {opts}")
+        print(f"arguments: {args}")
 
     if not len(args) > 0:
         parser.print_help()
