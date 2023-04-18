@@ -15,7 +15,7 @@ SSHUTTLE_EOL = "_EOL"
 SSHUTTLEID = random.randint(10000, 99999)
 
 
-def cook_rcfile(data):
+def cook_rcfile(opts, data):
     """
     Join elements of passed list and return a URI encoded string
 
@@ -26,7 +26,10 @@ def cook_rcfile(data):
       data (str): URI encoded string
     """
     data = SSHUTTLE_EOL.join(data)
-    return base64.b64encode(data)
+    encoded = base64.b64encode(data.encode('utf-8')).decode('utf-8')
+    if opts.verbose:
+        print(f"encoded rc file: {encoded}")
+    return encoded
 
 
 def get_parser():
@@ -42,12 +45,13 @@ def get_parser():
     parser = argparse.ArgumentParser(
         usage="%(prog)s [ssh-opts] <host>",
         description="%(prog)s takes advantage of bash to give you a "
-        "familiar home on remote systems",
+        "familiar home on remote systems"
     )
+    parser.add_argument('-v', '--verbose', action='store_true')
     return parser
 
 
-def default_rcfile():
+def default_rcfile(opts):
     """
     Return a simple default rcfile
 
@@ -69,7 +73,7 @@ trap cleaner SIGINT SIGTERM EXIT
     return lines
 
 
-def read_rcfile(rcfile):
+def read_rcfile(opts, rcfile):
     """
     Read the file specified by the passed filename and return a list of
     lines with newlines stripped
@@ -86,7 +90,7 @@ def read_rcfile(rcfile):
     return [line.rstrip() for line in script]
 
 
-def get_user_rcfiles():
+def get_user_rcfiles(opts):
     """
     Search default paths for rcfiles, read them, and return a list of lines
     Note: contents of .sshuttlerc.d are read first since they are more likely
@@ -105,14 +109,14 @@ def get_user_rcfiles():
     script = []
     for rcfile in search_files:
         if os.path.isfile(rcfile):
-            script += read_rcfile(rcfile)
+            script += read_rcfile(opts, rcfile)
         if os.path.isdir(rcfile):
             for rcdfile in os.listdir(rcfile):
-                script += read_rcfile(os.path.join(rcfile, rcdfile))
+                script += read_rcfile(opts, os.path.join(rcfile, rcdfile))
     return script
 
 
-def get_inject_string_base64(command_script):
+def get_inject_string_base64(opts, command_script):
     """
     Return a base64 encoded string which includes shell injection
 
@@ -131,7 +135,7 @@ def get_inject_string_base64(command_script):
     )
 
 
-def connect(target_host, ssh_options, command_script):
+def connect(opts, target_host, ssh_options, command_script):
     """
     Connect to the host and inject our commands
 
@@ -141,7 +145,7 @@ def connect(target_host, ssh_options, command_script):
         None
     """
     cmd_line = ""
-    cmd_line += get_inject_string_base64(command_script)
+    cmd_line += get_inject_string_base64(opts, command_script)
     cmd_line += "; /usr/bin/ssh -t"
 
     for option in ssh_options:
@@ -154,31 +158,31 @@ def connect(target_host, ssh_options, command_script):
     os.system(cmd_line)
 
 
-def main(args):
+def main(opts, args):
     """
     Build the injection string and connect to the host
     """
-    target_host = args[1].pop()
-    if len(args[1]) > 0:
-        ssh_options = args[1]
+    target_host = args.pop()
+    if len(args) > 0:
+        ssh_options = args
     else:
         ssh_options = ""
 
-    rcfile = default_rcfile()
-    rcfile += get_user_rcfiles()
-    inject_string = cook_rcfile(rcfile)
-    connect(target_host, ssh_options, inject_string)
+    rcfile = default_rcfile(opts)
+    rcfile += get_user_rcfiles(opts)
+    inject_string = cook_rcfile(opts, rcfile)
+    connect(opts, target_host, ssh_options, inject_string)
 
 
 def cli():
     parser = get_parser()
-    args = parser.parse_known_args()
+    opts, args = parser.parse_known_args()
 
-    if not len(args[1]) > 0:
+    if not len(args) > 0:
         parser.print_help()
         sys.exit(1)
 
-    sys.exit(main(args))
+    sys.exit(main(opts, args))
 
 
 if __name__ == "__main__":
